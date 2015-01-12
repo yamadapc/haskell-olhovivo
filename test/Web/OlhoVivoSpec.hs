@@ -30,7 +30,7 @@ spec = do
                            session
                            def
                            token
-                hPrint stderr res
                 res' <- olhoVivoLinhas session def "bandeira"
-                hPrint stderr res'
-                return ()
+                any (\l -> olhovivoLineLetreiro l == "6262" &&
+                           olhovivoLineTipo l == 10) res'
+                    `shouldBe` True
