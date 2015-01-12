@@ -54,12 +54,11 @@ newOlhoVivoApi :: Session
                -> IO Bool
                -- ^ Whether the authentication was successful
 newOlhoVivoApi session opts token = do
-    let host     = olhovivoApiBaseUrl opts ++ olhovivoApiVersion opts
-        endpoint = "/Login/Autenticar"
-        reqOpts  = defaults { params = [ ("token", token)
-                                       ]
+    let url = urlForEndpoint opts "/Login/Autenticar"
+        reqOpts = defaults { params = [ ("token", token)
+                                      ]
                             }
-    res <- postWith reqOpts session (host ++ endpoint) ("" :: ByteString)
+    res <- postWith reqOpts session url ("" :: ByteString)
     case res ^? responseBody of
        Just "true" -> return True
        Just "false" -> return False
@@ -67,10 +66,14 @@ newOlhoVivoApi session opts token = do
 
 olhoVivoLinhas :: Session -> OlhoVivoApiOptions -> Text -> IO [OlhoVivoLine]
 olhoVivoLinhas session opts q = do
-    let host = olhovivoApiBaseUrl opts ++ olhovivoApiVersion opts
-        endpoint = "/Linha/Buscar"
+    let url = urlForEndpoint opts "/Linha/Buscar"
         reqOpts = defaults { params = [ ("termosBusca", q) ]
                            }
 
-    json <- asJSON =<< getWith reqOpts session (host ++ endpoint)
+    json <- asJSON =<< getWith reqOpts session url
     return $ json ^. responseBody
+
+
+urlForEndpoint :: OlhoVivoApiOptions -> String -> String
+urlForEndpoint opts endpoint =
+    olhovivoApiBaseUrl opts ++ olhovivoApiVersion opts ++ endpoint
