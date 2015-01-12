@@ -4,7 +4,9 @@ module Web.OlhoVivoSpec
 
 import Data.Default (def)
 import Data.String (fromString)
+import Network.Wreq (defaults)
 import Network.Wreq.Session
+import Network.Wreq.Types (Options(..))
 import Test.Hspec (Spec, describe, it, shouldBe)
 import System.Environment (getEnv)
 import System.IO
@@ -22,15 +24,38 @@ spec = do
                            token
                 res `shouldBe` True
 
-    describe "olhoVivoLinhas" $
+    describe "olhoVivoLine" $
         it "makes a query for lines matching a string" $
             withSession $ \session -> do
                 token <- fromString `fmap` getEnv "SPTRANS_TOKEN"
-                res <- newOlhoVivoApi
-                           session
-                           def
-                           token
-                res' <- olhoVivoLinhas session def "bandeira"
+                res <- newOlhoVivoApi session def token
+
+                res' <- olhoVivoLines session def "bandeira"
                 any (\l -> olhovivoLineLetreiro l == "6262" &&
                            olhovivoLineTipo l == 10) res'
+                    `shouldBe` True
+
+    -- describe "olhoVivoLinhaDetails" $
+    --     it "fetches details relative to a certain line" $
+    --         withSession $ \session -> do
+    --             token <- fromString `fmap` getEnv "SPTRANS_TOKEN"
+    --             res <- newOlhoVivoApi session def token
+
+    --             let endpoint = "/Linha/CarregarDetalhes"
+    --                 reqOpts = defaults { params = [ ("codigoLinha", "906") ]
+    --                                    }
+    --             res <- getWith reqOpts session (urlForEndpoint def endpoint)
+    --             hPrint stderr res
+
+    --             return ()
+
+    describe "olhoVivoStops" $
+        it "makes a query for stops matching a string" $
+            withSession $ \session -> do
+                token <- fromString `fmap` getEnv "SPTRANS_TOKEN"
+                res <- newOlhoVivoApi session def token
+
+                res' <- olhoVivoStops session def "Afonso"
+                any (\s -> olhovivoStopEndereco s ==
+                               "R ARMINDA/ R BALTHAZAR DA VEIGA") res'
                     `shouldBe` True
