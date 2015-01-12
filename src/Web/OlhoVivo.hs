@@ -55,6 +55,20 @@ $(deriveJSON
     ''OlhoVivoStop
  )
 
+data OlhoVivoExpressLane =
+    OlhoVivoExpressLane { olhovivoExpressLaneCodCorredor :: Int
+                        , olhovivoExpressLaneNome :: String
+                        }
+  deriving(Eq, Ord, Show)
+
+$(deriveJSON
+    defaultOptions { fieldLabelModifier = drop $ length
+                                              ("olhovivoExpressLane" :: String)
+                   , constructorTagModifier = \(c:cs) -> toLower c : cs
+                   }
+    ''OlhoVivoExpressLane
+ )
+
 instance Default OlhoVivoApiOptions where
   def = OlhoVivoApiOptions
             { olhovivoApiBaseUrl = "http://api.olhovivo.sptrans.com.br/v"
@@ -101,6 +115,11 @@ olhoVivoStops session opts q =
     let reqOpts = defaults { params = [ ("termosBusca", q) ]
                            }
       in olhoVivoGet session opts "/Parada/Buscar" reqOpts
+
+olhoVivoExpressLanes :: Session -> OlhoVivoApiOptions -> IO [OlhoVivoExpressLane]
+olhoVivoExpressLanes session opts =
+      olhoVivoGet session opts "/Corredor" defaults
+
 
 olhoVivoStopsInLine :: Session -> OlhoVivoApiOptions -> Int -> IO [OlhoVivoStop]
 olhoVivoStopsInLine session opts lineCode =

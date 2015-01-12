@@ -59,3 +59,14 @@ spec = do
                 any (\s -> olhovivoStopEndereco s ==
                                "R ARMINDA/ R BALTHAZAR DA VEIGA") res'
                     `shouldBe` True
+
+    describe "olhoVivoExpressLanes" $
+        it "gets all express lanes in the city" $
+            withSession $ \session -> do
+                token <- fromString `fmap` getEnv "SPTRANS_TOKEN"
+                res <- newOlhoVivoApi session def token
+
+                res' <- olhoVivoExpressLanes session def
+                any (\s -> olhovivoExpressLaneNome s ==
+                               "Campo Limpo") res'
+                    `shouldBe` True
