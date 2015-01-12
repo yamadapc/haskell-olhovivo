@@ -8,7 +8,7 @@ import Data.Aeson.TH (Options(..), deriveJSON, defaultOptions)
 import Data.ByteString.Lazy (ByteString)
 import Data.Char (toLower)
 import Data.Default (Default(..))
-import Data.Text (Text)
+import Data.Text (Text, pack)
 import Network.Wreq (asJSON, defaults, responseBody)
 import Network.Wreq.Types (Options(..))
 import Network.Wreq.Session
@@ -101,6 +101,21 @@ olhoVivoStops session opts q =
     let reqOpts = defaults { params = [ ("termosBusca", q) ]
                            }
       in olhoVivoGet session opts "/Parada/Buscar" reqOpts
+
+olhoVivoStopsInLine :: Session -> OlhoVivoApiOptions -> Int -> IO [OlhoVivoStop]
+olhoVivoStopsInLine session opts lineCode =
+    let reqOpts = defaults { params = [ ("codigoLinha", pack $ show lineCode) ]
+                           }
+      in olhoVivoGet session opts "/Parada/BuscarParadasPorLinha" reqOpts
+
+olhoVivoStopsInExpressLane :: Session -> OlhoVivoApiOptions -> Int
+                           -> IO [OlhoVivoStop]
+olhoVivoStopsInExpressLane session opts expressLaneCode =
+    let reqOpts = defaults { params =
+                                 [ ("codigoLinha" , pack $ show expressLaneCode)
+                                 ]
+                           }
+      in olhoVivoGet session opts "/Parada/BuscarParadasPorLinha" reqOpts
 
 urlForEndpoint :: OlhoVivoApiOptions -> String -> String
 urlForEndpoint opts endpoint =
