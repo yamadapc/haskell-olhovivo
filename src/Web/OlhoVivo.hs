@@ -3,6 +3,7 @@
 module Web.OlhoVivo where
 
 import Control.Lens ((^.), (^?))
+import Data.Aeson (FromJSON)
 import Data.Aeson.TH (Options(..), deriveJSON, defaultOptions)
 import Data.ByteString.Lazy (ByteString)
 import Data.Char (toLower)
@@ -15,6 +16,7 @@ import Network.Wreq.Session
 data OlhoVivoApiOptions = OlhoVivoApiOptions { olhovivoApiVersion :: String
                                              , olhovivoApiBaseUrl :: String
                                              }
+  deriving(Eq, Ord, Show)
 
 data OlhoVivoLine =
     OlhoVivoLineSummary { olhovivoLineCodigoLinha :: Int
@@ -26,7 +28,7 @@ data OlhoVivoLine =
                         , olhovivoLineDenominacaoTSTP :: String
                         , olhovivoLineInformacoes :: Maybe String
                         }
-  deriving(Show)
+  deriving(Eq, Ord, Show)
 
 $(deriveJSON
     defaultOptions { fieldLabelModifier = drop $ length
@@ -34,6 +36,23 @@ $(deriveJSON
                    , constructorTagModifier = \(c:cs) -> toLower c : cs
                    }
     ''OlhoVivoLine
+ )
+
+data OlhoVivoStop =
+    OlhoVivoStop { olhovivoStopCodigoParada :: Int
+                 , olhovivoStopNome :: String
+                 , olhovivoStopEndereco :: String
+                 , olhovivoStopLatitude :: Double
+                 , olhovivoStopLongitude :: Double
+                 }
+  deriving(Eq, Ord, Show)
+
+$(deriveJSON
+    defaultOptions { fieldLabelModifier = drop $ length
+                                              ("olhovivoStop" :: String)
+                   , constructorTagModifier = \(c:cs) -> toLower c : cs
+                   }
+    ''OlhoVivoStop
  )
 
 instance Default OlhoVivoApiOptions where
@@ -64,15 +83,24 @@ newOlhoVivoApi session opts token = do
        Just "false" -> return False
        Nothing -> return False
 
-olhoVivoLinhas :: Session -> OlhoVivoApiOptions -> Text -> IO [OlhoVivoLine]
-olhoVivoLinhas session opts q = do
-    let url = urlForEndpoint opts "/Linha/Buscar"
-        reqOpts = defaults { params = [ ("termosBusca", q) ]
-                           }
-
+olhoVivoGet :: FromJSON a => Session -> OlhoVivoApiOptions -> String
+            -> Network.Wreq.Types.Options -> IO [a]
+olhoVivoGet session opts endpoint reqOpts = do
+    let url = urlForEndpoint opts endpoint
     json <- asJSON =<< getWith reqOpts session url
     return $ json ^. responseBody
 
+olhoVivoLines :: Session -> OlhoVivoApiOptions -> Text -> IO [OlhoVivoLine]
+olhoVivoLines session opts q =
+    let reqOpts = defaults { params = [ ("termosBusca", q) ]
+                           }
+      in olhoVivoGet session opts "/Linha/Buscar" reqOpts
+
+olhoVivoStops :: Session -> OlhoVivoApiOptions -> Text -> IO [OlhoVivoStop]
+olhoVivoStops session opts q =
+    let reqOpts = defaults { params = [ ("termosBusca", q) ]
+                           }
+      in olhoVivoGet session opts "/Parada/Buscar" reqOpts
 
 urlForEndpoint :: OlhoVivoApiOptions -> String -> String
 urlForEndpoint opts endpoint =
