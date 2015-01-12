@@ -2,16 +2,21 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Web.OlhoVivo where
 
-import Control.Lens ((^.), (^?))
-import Data.Aeson (FromJSON)
-import Data.Aeson.TH (Options(..), deriveJSON, defaultOptions)
+import Control.Applicative ((<$>))
+import Control.Lens ((^.), (^..), (^?))
+import Data.Aeson (FromJSON, Result(..), Object, fromJSON)
+import Data.Aeson.TH (Options(..), defaultOptions)
+import qualified Data.Aeson.TH as Aeson (deriveJSON)
 import Data.ByteString.Lazy (ByteString)
 import Data.Char (toLower)
 import Data.Default (Default(..))
+import qualified Data.HashMap.Strict as HashMap (lookup)
 import Data.Text (Text, pack)
 import Network.Wreq (asJSON, defaults, responseBody)
 import Network.Wreq.Types (Options(..))
 import Network.Wreq.Session
+
+import Web.OlhoVivo.TH
 
 data OlhoVivoApiOptions = OlhoVivoApiOptions { olhovivoApiVersion :: String
                                              , olhovivoApiBaseUrl :: String
@@ -30,13 +35,7 @@ data OlhoVivoLine =
                         }
   deriving(Eq, Ord, Show)
 
-$(deriveJSON
-    defaultOptions { fieldLabelModifier = drop $ length
-                                              ("olhovivoLine" :: String)
-                   , constructorTagModifier = \(c:cs) -> toLower c : cs
-                   }
-    ''OlhoVivoLine
- )
+$(deriveJSON "olhovivoLine" ''OlhoVivoLine)
 
 data OlhoVivoStop =
     OlhoVivoStop { olhovivoStopCodigoParada :: Int
@@ -47,13 +46,7 @@ data OlhoVivoStop =
                  }
   deriving(Eq, Ord, Show)
 
-$(deriveJSON
-    defaultOptions { fieldLabelModifier = drop $ length
-                                              ("olhovivoStop" :: String)
-                   , constructorTagModifier = \(c:cs) -> toLower c : cs
-                   }
-    ''OlhoVivoStop
- )
+$(deriveJSON "olhovivoStop" ''OlhoVivoStop)
 
 data OlhoVivoExpressLane =
     OlhoVivoExpressLane { olhovivoExpressLaneCodCorredor :: Int
@@ -61,12 +54,21 @@ data OlhoVivoExpressLane =
                         }
   deriving(Eq, Ord, Show)
 
-$(deriveJSON
-    defaultOptions { fieldLabelModifier = drop $ length
-                                              ("olhovivoExpressLane" :: String)
-                   , constructorTagModifier = \(c:cs) -> toLower c : cs
-                   }
-    ''OlhoVivoExpressLane
+$(deriveJSON "olhovivoExpressLane" ''OlhoVivoExpressLane)
+
+data OlhoVivoPosition = OlhoVivoPosition { olhovivoPositionP :: String
+                                         , olhovivoPositionA :: Bool
+                                         , olhovivoPositionPy :: Double
+                                         , olhovivoPositionPx :: Double
+                                         }
+  deriving(Eq, Ord, Show)
+
+$(let prefix = "olhovivoPosition" :: String
+    in Aeson.deriveJSON
+           defaultOptions { fieldLabelModifier = map toLower .
+                                                 drop (length prefix)
+                          }
+           ''OlhoVivoPosition
  )
 
 instance Default OlhoVivoApiOptions where
@@ -98,7 +100,7 @@ newOlhoVivoApi session opts token = do
        Nothing -> return False
 
 olhoVivoGet :: FromJSON a => Session -> OlhoVivoApiOptions -> String
-            -> Network.Wreq.Types.Options -> IO [a]
+            -> Network.Wreq.Types.Options -> IO a
 olhoVivoGet session opts endpoint reqOpts = do
     let url = urlForEndpoint opts endpoint
     json <- asJSON =<< getWith reqOpts session url
@@ -135,6 +137,18 @@ olhoVivoStopsInExpressLane session opts expressLaneCode =
                                  ]
                            }
       in olhoVivoGet session opts "/Parada/BuscarParadasPorLinha" reqOpts
+
+olhoVivoLinePositions :: Session -> OlhoVivoApiOptions -> Int
+                  -> IO [OlhoVivoPosition]
+olhoVivoLinePositions session opts lineCode = do
+    let reqOpts = defaults { params = [ ("codigoLinha", pack $ show lineCode) ]
+                           }
+    res <- olhoVivoGet session opts "/Posicao" reqOpts :: IO Object
+    case fromJSON <$> HashMap.lookup ("vs" :: Text) res of
+        Just (Success ps) -> return ps
+        Just (Error err) -> fail err
+        Nothing -> undefined
+
 
 urlForEndpoint :: OlhoVivoApiOptions -> String -> String
 urlForEndpoint opts endpoint =

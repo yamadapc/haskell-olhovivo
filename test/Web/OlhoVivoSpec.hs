@@ -70,3 +70,12 @@ spec = do
                 any (\s -> olhovivoExpressLaneNome s ==
                                "Campo Limpo") res'
                     `shouldBe` True
+
+    -- describe "olhoVivoLinePositions" $
+    --     it "gets all bus positions for a line code" $
+    --         withSession $ \session -> do
+    --             token <- fromString `fmap` getEnv "SPTRANS_TOKEN"
+    --             res <- newOlhoVivoApi session def token
+
+    --             res' <- olhoVivoLinePositions session def 906
+    --             hPrint stderr res'
