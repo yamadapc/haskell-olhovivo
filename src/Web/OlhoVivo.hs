@@ -16,9 +16,16 @@ data OlhoVivoApiOptions = OlhoVivoApiOptions { olhovivoApiVersion :: String
                                              , olhovivoApiBaseUrl :: String
                                              }
 
-data OlhoVivoLine = OlhoVivoLineSummary { olhovivoLineCodigoLinha :: Int
-                                        , olhovivoLineCircular :: Bool
-                                        }
+data OlhoVivoLine =
+    OlhoVivoLineSummary { olhovivoLineCodigoLinha :: Int
+                        , olhovivoLineCircular :: Bool
+                        , olhovivoLineLetreiro :: String
+                        , olhovivoLineSentido :: Int
+                        , olhovivoLineTipo :: Int
+                        , olhovivoLineDenominacaoTPTS :: String
+                        , olhovivoLineDenominacaoTSTP :: String
+                        , olhovivoLineInformacoes :: Maybe String
+                        }
   deriving(Show)
 
 $(deriveJSON
@@ -65,5 +72,5 @@ olhoVivoLinhas session opts q = do
         reqOpts = defaults { params = [ ("termosBusca", q) ]
                            }
 
-    res <- asJSON =<< getWith reqOpts session (host ++ endpoint)
-    return $ res ^. responseBody
+    json <- asJSON =<< getWith reqOpts session (host ++ endpoint)
+    return $ json ^. responseBody
