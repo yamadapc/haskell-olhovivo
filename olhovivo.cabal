@@ -37,6 +37,8 @@ executable olhovivo-websockets-server
                      , hspec >= 2.1.2
                      , lens
                      , lens-aeson >= 1.0.0.2
+                     , random >= 1.0.1.1
+                     , stm >= 2.4.2
                      , template-haskell
                      , text
                      , unordered-containers
