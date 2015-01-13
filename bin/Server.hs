@@ -69,51 +69,53 @@ main = do
     _ <- forkIO $ withSession $ \session -> do
         r <- newOlhoVivoApi session def token
         putStrLn "Authenticated with the olhovivo API"
-        if r
-            then do
-                lineCodes <- map olhovivoLineCodigoLinha <$>
-                              olhoVivoLines session def "azevedo"
-                putStrLn $
-                    "Fetched " ++ show (length lineCodes) ++ " available lines"
-
-                let loop lineCode = do
-                        positions <- olhoVivoLinePositions session def lineCode
-                        print positions
-                        mapConcurrently
-                            (atomically . writeTChan (serverPublishChan state))
-                            (zip (repeat lineCode) positions)
-                        threadDelay (1000 * 1000)
-                        loop lineCode
-
-                void $ mapConcurrently loop lineCodes
-            else undefined
+        lineCodes <- fetchLineCodes session token
+        listenForPositions session state lineCodes
     WS.runServer "0.0.0.0" 9160 $ application state
+
+fetchLineCodes :: Session -> Text -> IO [Int]
+fetchLineCodes session token = do
+    r <- newOlhoVivoApi session def token
+    if r
+        then do
+            lineCodes <- map olhovivoLineCodigoLinha <$>
+                         olhoVivoLines session def "azevedo"
+            putStrLn $ "Fetched " ++ show (length lineCodes) ++ " available lines"
+            return lineCodes
+        else fetchLineCodes session token
+
+listenForPositions :: Session -> ServerState -> [Int] -> IO ()
+listenForPositions session state = void . mapConcurrently loop
+  where
+    outputChan = serverPublishChan state
+    loop lineCode = do
+        positions <- olhoVivoLinePositions session def lineCode
+        mapConcurrently
+            (atomically . writeTChan outputChan)
+            (zip (repeat lineCode) positions)
+        threadDelay (1000 * 1000)
+        loop lineCode
 
 -- |
 -- The application's accept handler. Adds a client into the global state,
-
 application :: ServerState -> WS.ServerApp
-application state pending = WS.acceptRequest pending >>= stablishConnection
-  where
-    authErrorMessage :: String
-    authErrorMessage = "{\"type\":\"error\",\"message\":" ++
-                       "\"Client not authenticated\"}"
-    stablishConnection conn = handshakeClient conn >>= \case
-        Nothing -> do
-            WS.sendTextData conn (pack authErrorMessage)
-            stablishConnection conn
+application state pending = do
+    conn <- WS.acceptRequest pending
+    handshakeClient conn >>= \case
+        Nothing -> WS.sendTextData conn authErrorMessage
         Just client ->
             -- Add the client to the application state and ping it every 30s
             bracket_ (addClient client state) (removeClient client state) $ do
                 localChan <- atomically $ dupTChan (serverPublishChan state)
                 WS.forkPingThread conn 30
                 forever $ do
-                    (i, p) <- atomically $ readTChan localChan
-
-                    let si = ByteString.pack (show i)
-                        message = "{\"type\":\"position\",\"message\":" <>
-                                  "{\"codigoLinha\":" <> si <> "," <>
-                                  "\"posicao\":" <> Aeson.encode p <>
-                                  " }}"
-
-                    WS.sendTextData (snd client) message
+                    message <- atomically $ readTChan localChan
+                    WS.sendTextData (snd client) (serializePosition message)
+  where
+    authErrorMessage = pack ("{\"type\":\"error\",\"message\":" ++
+                             "\"Client not authenticated\"}")
+    serializePosition (lineCode, position) =
+        "{\"type\":\"position\",\"message\":" <>
+        "{\"codigoLinha\":" <> ByteString.pack (show lineCode) <> "," <>
+        "\"posicao\":" <> Aeson.encode position <>
+        " }}"
