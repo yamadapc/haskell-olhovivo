@@ -28,6 +28,43 @@ library
   hs-source-dirs:      lib
   default-language:    Haskell2010
 
+executable olhovivo-websockets-server
+  main-is:             Server.hs
+  build-depends:       aeson
+                     , base >=4.7 && <4.8
+                     , bytestring
+                     , data-default
+                     , hspec >= 2.1.2
+                     , lens
+                     , lens-aeson >= 1.0.0.2
+                     , template-haskell
+                     , text
+                     , unordered-containers
+                     , websockets
+                     , wreq >=0.3 && <0.4
+  hs-source-dirs:      lib
+                     , bin
+  default-language:    Haskell2010
+
+executable olhovivo-websockets-client
+  main-is:             WSClient.hs
+  build-depends:       aeson
+                     , base >=4.7 && <4.8
+                     , bytestring
+                     , data-default
+                     , hspec >= 2.1.2
+                     , lens
+                     , lens-aeson >= 1.0.0.2
+                     , mtl >= 2.1.3.1
+                     , network >= 2.4.2.3
+                     , template-haskell
+                     , text
+                     , unordered-containers
+                     , websockets
+                     , wreq >=0.3 && <0.4
+  hs-source-dirs:      lib
+                     , bin
+  default-language:    Haskell2010
 
 test-suite hspec
   type:                exitcode-stdio-1.0
