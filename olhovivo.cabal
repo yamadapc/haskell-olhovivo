@@ -31,6 +31,7 @@ library
 executable olhovivo-websockets-server
   main-is:             Server.hs
   build-depends:       aeson
+                     , async >= 2.0.1.5
                      , base >=4.7 && <4.8
                      , bytestring
                      , data-default
