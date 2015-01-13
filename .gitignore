@@ -19,4 +19,5 @@ cabal.config
 *.aux
 *.hp
 
+*~
 /about-sp.md

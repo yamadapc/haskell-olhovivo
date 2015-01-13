@@ -1,9 +1,0 @@
-module Web.OlhoVivo.TH where
-
-import qualified Data.Aeson.TH as Aeson (Options(..), defaultOptions, deriveJSON)
-
-deriveJSON prefix name = Aeson.deriveJSON opts name
-  where
-    opts = defaultOptions { fieldLabelModifier = drop . length prefix
-                          , constructorTagModifier = \(c:cs) -> toLower c : cs
-                          }
