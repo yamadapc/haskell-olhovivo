@@ -39,8 +39,10 @@ data OlhoVivoApiOptions = OlhoVivoApiOptions { olhovivoApiVersion :: String
                                              }
   deriving(Eq, Ord, Show)
 
+type LineCode = Int
+
 data OlhoVivoLine =
-    OlhoVivoLineSummary { olhovivoLineCodigoLinha :: Int
+    OlhoVivoLineSummary { olhovivoLineCodigoLinha :: LineCode
                         , olhovivoLineCircular :: Bool
                         , olhovivoLineLetreiro :: String
                         , olhovivoLineSentido :: Int
@@ -139,9 +141,9 @@ olhoVivoExpressLanes session opts =
       olhoVivoGet session opts "/Corredor" defaults
 
 
-olhoVivoStopsInLine :: Session -> OlhoVivoApiOptions -> Int -> IO [OlhoVivoStop]
+olhoVivoStopsInLine :: Session -> OlhoVivoApiOptions -> LineCode -> IO [OlhoVivoStop]
 olhoVivoStopsInLine session opts lineCode =
-    let reqOpts = defaults { params = [ ("codigoLinha", pack $ show lineCode) ]
+    let reqOpts = defaults { params = [ ("codigoLinha", pack (show lineCode)) ]
                            }
       in olhoVivoGet session opts "/Parada/BuscarParadasPorLinha" reqOpts
 
@@ -149,12 +151,12 @@ olhoVivoStopsInExpressLane :: Session -> OlhoVivoApiOptions -> Int
                            -> IO [OlhoVivoStop]
 olhoVivoStopsInExpressLane session opts expressLaneCode =
     let reqOpts = defaults { params =
-                                 [ ("codigoLinha" , pack $ show expressLaneCode)
+                                 [ ("codigoCorredor" , pack $ show expressLaneCode)
                                  ]
                            }
-      in olhoVivoGet session opts "/Parada/BuscarParadasPorLinha" reqOpts
+      in olhoVivoGet session opts "/Parada/BuscarParadasPorCorredor" reqOpts
 
-olhoVivoLinePositions :: Session -> OlhoVivoApiOptions -> Int
+olhoVivoLinePositions :: Session -> OlhoVivoApiOptions -> LineCode
                   -> IO [OlhoVivoPosition]
 olhoVivoLinePositions session opts lineCode = do
     let reqOpts = defaults { params = [ ("codigoLinha", pack $ show lineCode) ]
@@ -163,8 +165,7 @@ olhoVivoLinePositions session opts lineCode = do
     case fromJSON <$> HashMap.lookup ("vs" :: Text) res of
         Just (Success ps) -> return ps
         Just (Error err) -> fail err
-        Nothing -> undefined
-
+        Nothing -> fail "Unable to parse the Olho Vivo API's response"
 
 urlForEndpoint :: OlhoVivoApiOptions -> String -> String
 urlForEndpoint opts endpoint =
