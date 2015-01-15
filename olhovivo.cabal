@@ -69,6 +69,26 @@ executable olhovivo-websockets-client
                      , bin
   default-language:    Haskell2010
 
+executable olhovivo-extract-line-codes
+  main-is:             ExtractLineCodes.hs
+  build-depends:       aeson
+                     , async >= 2.0.1.5
+                     , base >=4.7 && <4.8
+                     , bytestring
+                     , cassava
+                     , data-default
+                     , hspec >= 2.1.2
+                     , lens
+                     , lens-aeson >= 1.0.0.2
+                     , template-haskell
+                     , text
+                     , unordered-containers
+                     , vector
+                     , wreq >=0.3 && <0.4
+  hs-source-dirs:      lib
+                     , bin
+  default-language:    Haskell2010
+
 test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs
