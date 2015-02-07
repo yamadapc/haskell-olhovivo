@@ -82,12 +82,9 @@ data OlhoVivoPosition = OlhoVivoPosition { olhovivoPositionP :: String
   deriving(Eq, Ord, Show)
 
 $(let prefix = "olhovivoPosition" :: String
-    in Aeson.deriveJSON
-           defaultOptions { fieldLabelModifier = map toLower .
-                                                 drop (length prefix)
-                          }
-           ''OlhoVivoPosition
- )
+  in Aeson.deriveJSON
+         defaultOptions { fieldLabelModifier = map toLower . dropPrefix prefix }
+         ''OlhoVivoPosition)
 
 instance Default OlhoVivoApiOptions where
   def = OlhoVivoApiOptions
