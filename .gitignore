@@ -21,3 +21,4 @@ cabal.config
 
 *~
 /about-sp.md
+output.docset
