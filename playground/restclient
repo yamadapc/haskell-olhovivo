@@ -1,0 +1,19 @@
+## This is a `restclient-mode` file for testing our mock Olho Vivo API server
+###############################################################################
+:host = http://127.0.0.1:3000
+
+# Testing authentication with an "invalid" token:
+:token = 1234
+POST :host/Login/Autenticar?token=:token
+
+# Testing authentication with a "valid" token:
+:token = "valid-token"
+POST :host/Login/Autenticar?token=:token
+
+## These are a suit of similar requests for the real production server
+###############################################################################
+:host = http://api.olhovivo.sptrans.com.br/v0
+:token := (getenv "SPTRANS_TOKEN")
+
+# With a real token
+POST :host/Login/Autenticar?token=:token

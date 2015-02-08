@@ -89,6 +89,30 @@ executable olhovivo-extract-line-codes
                      , bin
   default-language:    Haskell2010
 
+executable olhovivo-mock-server
+  main-is:             Test/OlhoVivoMockServer.hs
+  build-depends:       aeson >= 0.7.0.6
+                     , base >=4.7 && <4.8
+                     , blaze-builder >= 0.3.3.4
+                     , bytestring
+                     , cookie >= 0.4.1.4
+                     , data-default
+                     , hspec >=2.1 && <3
+                     , http-types
+                     , lens
+                     , lens-aeson >= 1.0.0.2
+                     , mtl
+                     , neat-interpolation
+                     , scotty
+                     , template-haskell
+                     , text
+                     , unordered-containers
+                     , wai
+                     , wreq >=0.3 && <0.4
+  hs-source-dirs:      lib
+                     , test
+  default-language:    Haskell2010
+
 test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs
