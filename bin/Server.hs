@@ -14,7 +14,8 @@ import Data.String (fromString)
 import Data.Text as T (Text, pack, unpack)
 import qualified Data.Text.IO as T
 import Network.WebSockets as WS
-import Network.Wreq.Session
+import Network.Wreq.Session hiding (withSession)
+import qualified Network.Wreq.Session as Wreq (withSession)
 import System.Environment (getEnv)
 import System.Random
 import Web.OlhoVivo
@@ -66,7 +67,7 @@ main = do
     state <- newServerState
     putStrLn "Starting olhovivo transport thread..."
 
-    _ <- forkIO $ withSession $ \session -> do
+    _ <- forkIO $ Wreq.withSession $ \session -> do
         r <- newOlhoVivoApi session def token
         putStrLn "Authenticated with the olhovivo API"
         lineCodes <- fetchLineCodes session token
