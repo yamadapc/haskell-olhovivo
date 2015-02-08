@@ -15,7 +15,9 @@ import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
 import System.Environment (getEnv)
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
+
 import Web.OlhoVivo
+import Web.OlhoVivo.Internal
 
 token :: Text
 token = unsafePerformIO $ fromString `fmap` getEnv "SPTRANS_TOKEN"
