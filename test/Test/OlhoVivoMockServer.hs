@@ -33,7 +33,7 @@ server = do
 main :: IO ()
 main = scotty 3000 server
 
--- /Login/Autenticar
+-- POST /Login/Autenticar?token=:token
 login :: ActionM ()
 login = maybeQuery "token" >>= \case
     -- This is mimicking the production server's behaviour. I wouldn't design
@@ -52,6 +52,7 @@ login = maybeQuery "token" >>= \case
     validateToken "valid-token" = True
     validateToken _ = False
 
+-- GET /Linha/Busca?termosBusca=:termosBusca
 queryLines :: ActionM ()
 queryLines = maybeQuery "termosBusca" >>= \case
     Nothing -> notFoundError
