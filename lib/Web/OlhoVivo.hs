@@ -17,7 +17,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-module Web.OlhoVivo where
+module Web.OlhoVivo
+  where
 
 import Control.Applicative ((<$>))
 import Control.Exception (Exception, throwIO)
@@ -109,9 +110,7 @@ instance Exception OlhoVivoError
 authenticateSession :: OlhoVivoApiOptions -> Text -> Session -> IO ()
 authenticateSession opts token session = do
     let url = urlForEndpoint opts "/Login/Autenticar"
-        reqOpts = defaults { params = [ ("token", token)
-                                      ]
-                            }
+        reqOpts = defaults { params = [ ("token", token)]}
     res <- postWith reqOpts session url ("" :: ByteString)
     -- print $ res ^. statusCode
     case res ^? responseBody of
