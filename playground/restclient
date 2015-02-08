@@ -2,13 +2,20 @@
 ###############################################################################
 :host = http://127.0.0.1:3000
 
-# Testing authentication with an "invalid" token:
+# Testing authentication with an "invalid" token
 :token = 1234
 POST :host/Login/Autenticar?token=:token
 
-# Testing authentication with a "valid" token:
+# Testing authentication with a "valid" token
 :token = "valid-token"
 POST :host/Login/Autenticar?token=:token
+
+# Testing authentication with no token
+POST :host/Login/Autenticar
+
+# Testing authentication with bogus
+POST :host/Login/Autenticar?token
+
 
 ## These are a suit of similar requests for the real production server
 ###############################################################################
@@ -17,3 +24,16 @@ POST :host/Login/Autenticar?token=:token
 
 # With a real token
 POST :host/Login/Autenticar?token=:token
+
+# With strange querystring
+POST :host/Login/Autenticar?token
+
+# With no token at all
+POST :host/Login/Autenticar
+
+# Without being authenticated
+GET :host/Linha/Buscar?termosBusca=bandeira
+
+# Without sending `termosBusca`
+GET :host/Linha/Buscar
+
