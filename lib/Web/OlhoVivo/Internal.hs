@@ -15,6 +15,7 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Web.OlhoVivo.Internal
@@ -22,7 +23,7 @@ module Web.OlhoVivo.Internal
 
 import Control.Exception (Exception, throwIO)
 import Control.Lens ((^.), (^?))
-import Data.Aeson (FromJSON, Result(..), Object, fromJSON)
+import Data.Aeson (FromJSON, ToJSON, Result(..), Object, fromJSON)
 import Data.Aeson.TH (Options(..), defaultOptions)
 import qualified Data.Aeson.TH as Aeson (deriveJSON)
 import Data.ByteString.Lazy (ByteString)
@@ -60,7 +61,14 @@ instance Default OlhoVivoApiOptions where
 -- several ways to fetch them, but you'll be better off seeking for existing
 -- line code scrapping solutions, such as the scripts I've written in:
 -- <https://github.com/yamadapc/node-olhovivo node-olhovivo>
-type LineCode = Int
+-- .
+-- Other aliases for codes are the same.
+newtype LineCode = LineCode Int
+  deriving(Eq, Ord, Show, FromJSON, ToJSON, Typeable)
+newtype ExpressLaneCode = ExpressLaneCode Int
+  deriving(Eq, Ord, Show, FromJSON, ToJSON, Typeable)
+newtype StopCode = StopCode Int
+  deriving(Eq, Ord, Show, FromJSON, ToJSON, Typeable)
 
 -- |
 -- Line information, as returned by /Linha/Buscar
@@ -81,7 +89,7 @@ deriveJSON "olhovivoLine" ''OlhoVivoLine
 -- |
 -- Stop information, as returned by /Parada/Buscar.../
 data OlhoVivoStop =
-    OlhoVivoStop { olhovivoStopCodigoParada :: Int
+    OlhoVivoStop { olhovivoStopCodigoParada :: StopCode
                  , olhovivoStopNome :: String
                  , olhovivoStopEndereco :: String
                  , olhovivoStopLatitude :: Double
@@ -94,7 +102,7 @@ deriveJSON "olhovivoStop" ''OlhoVivoStop
 -- |
 -- Express Lane information, as returned by /Corredor
 data OlhoVivoExpressLane =
-    OlhoVivoExpressLane { olhovivoExpressLaneCodCorredor :: Int
+    OlhoVivoExpressLane { olhovivoExpressLaneCodCorredor :: ExpressLaneCode
                         , olhovivoExpressLaneNome :: String
                         }
   deriving(Eq, Ord, Show)

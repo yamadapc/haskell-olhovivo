@@ -14,25 +14,29 @@
 -- You should have received a copy of the GNU General Public License along
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Web.OlhoVivo
     (
       authenticateSession
     , withSession
-    , olhoVivoLines
-    , olhoVivoLinePositions
-    , olhoVivoExpressLanes
-    , olhoVivoStops
-    , olhoVivoStopsInLine
-    , olhoVivoStopsInExpressLane
+    , queryLines
+    , queryStops
+    , queryPositions
+    , listExpressLanes
     -- Types
     , OlhoVivoLine(..)
     , OlhoVivoStop(..)
     , OlhoVivoExpressLane(..)
     , OlhoVivoPosition(..)
     , OlhoVivoError(..)
+    , LineCode(..)
+    , ExpressLaneCode(..)
+    , StopCode(..)
+    , Text(..)
     -- Re-exports
     , Default(..)
+    , Session(..)
     )
   where
 
@@ -55,42 +59,46 @@ import qualified Network.Wreq.Session as Wreq (withSession)
 
 import Web.OlhoVivo.Internal
 
-olhoVivoLines :: Session -> OlhoVivoApiOptions -> Text -> IO [OlhoVivoLine]
-olhoVivoLines session opts q =
+queryLines :: Session -> OlhoVivoApiOptions -> Text -> IO [OlhoVivoLine]
+queryLines session opts q =
     let reqOpts = defaults { params = [ ("termosBusca", q) ] }
       in olhoVivoGet session opts "/Linha/Buscar" reqOpts
 
-olhoVivoStops :: Session -> OlhoVivoApiOptions -> Text -> IO [OlhoVivoStop]
-olhoVivoStops session opts q =
-    let reqOpts = defaults { params = [ ("termosBusca", q) ] }
-      in olhoVivoGet session opts "/Parada/Buscar" reqOpts
+listExpressLanes :: Session -> OlhoVivoApiOptions -> IO [OlhoVivoExpressLane]
+listExpressLanes session opts = olhoVivoGet session opts "/Corredor" defaults
 
-olhoVivoExpressLanes :: Session -> OlhoVivoApiOptions -> IO [OlhoVivoExpressLane]
-olhoVivoExpressLanes session opts =
-      olhoVivoGet session opts "/Corredor" defaults
-
-
-olhoVivoStopsInLine :: Session -> OlhoVivoApiOptions -> LineCode -> IO [OlhoVivoStop]
-olhoVivoStopsInLine session opts lineCode =
-    let reqOpts = defaults { params = [ ("codigoLinha", pack (show lineCode)) ] }
-      in olhoVivoGet session opts "/Parada/BuscarParadasPorLinha" reqOpts
-
-olhoVivoStopsInExpressLane :: Session -> OlhoVivoApiOptions -> Int
-                           -> IO [OlhoVivoStop]
-olhoVivoStopsInExpressLane session opts expressLaneCode =
-    let reqOpts = defaults { params =
-                                 [ ("codigoCorredor" , pack $ show expressLaneCode)
-                                 ]
-                           }
-      in olhoVivoGet session opts "/Parada/BuscarParadasPorCorredor" reqOpts
-
-olhoVivoLinePositions :: Session -> OlhoVivoApiOptions -> LineCode
-                  -> IO [OlhoVivoPosition]
-olhoVivoLinePositions session opts lineCode = do
-    let reqOpts = defaults { params = [ ("codigoLinha", pack $ show lineCode) ]
-                           }
+queryPositions :: Session -> OlhoVivoApiOptions -> LineCode
+                   -> IO [OlhoVivoPosition]
+queryPositions session opts lineCode = do
+    let reqOpts = defaults { params = [ ("codigoLinha", pack $ show lineCode) ] }
     res <- olhoVivoGet session opts "/Posicao" reqOpts :: IO Object
     case fromJSON <$> HashMap.lookup ("vs" :: Text) res of
         Just (Success ps) -> return ps
         Just (Error err) -> fail err
         Nothing -> fail "Unable to parse the Olho Vivo API's response"
+
+-- |
+-- An overloaded function for searching for stops, by 'Text', 'LineCode',
+-- 'ExpressLaneCode' or any combination of them
+queryStops :: StopsQuery q
+           => Session -> OlhoVivoApiOptions -> q -> IO [OlhoVivoStop]
+queryStops session opts q =
+    let reqOpts = defaults { params = toParams q }
+      in olhoVivoGet session opts "/Parada/Buscar" reqOpts
+
+-- Variadic boilerplate for 'queryStops'
+class StopsQuery a where
+    toParams :: a -> [(Text, Text)]
+
+instance StopsQuery Text where
+    toParams q = [("termosBusca", q)]
+
+instance StopsQuery LineCode where
+    toParams (LineCode l) = [("codigoLinha", pack (show l))]
+
+instance StopsQuery ExpressLaneCode where
+    toParams (ExpressLaneCode e) = [("codigoCorredor", pack (show e))]
+
+instance StopsQuery (Maybe Text, Maybe LineCode, Maybe ExpressLaneCode) where
+    toParams (mt, ml, me) = maybe [] toParams ml ++ maybe [] toParams mt ++
+                            maybe [] toParams me
