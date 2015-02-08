@@ -15,15 +15,14 @@ import Data.Text as T (Text, pack, unpack)
 import qualified Data.Text.IO as T
 import Network.WebSockets as WS
 import Network.Wreq.Session hiding (withSession)
-import qualified Network.Wreq.Session as Wreq (withSession)
 import System.Environment (getEnv)
 import System.Random
 import Web.OlhoVivo
 
 data ServerState =
     ServerState { serverClients :: MVar [Client]
-                , serverPublishChan :: TChan (Int, OlhoVivoPosition)
-                , serverKnownLines :: MVar [Int]
+                , serverPublishChan :: TChan (LineCode, OlhoVivoPosition)
+                , serverKnownLines :: MVar [LineCode]
                 }
  deriving(Eq)
 
@@ -67,30 +66,25 @@ main = do
     state <- newServerState
     putStrLn "Starting olhovivo transport thread..."
 
-    _ <- forkIO $ Wreq.withSession $ \session -> do
-        r <- newOlhoVivoApi session def token
+    _ <- forkIO $ withSession def token $ \session -> do
         putStrLn "Authenticated with the olhovivo API"
-        lineCodes <- fetchLineCodes session token
+        lineCodes <- fetchLineCodes session
         listenForPositions session state lineCodes
     WS.runServer "0.0.0.0" 9160 $ application state
 
-fetchLineCodes :: Session -> Text -> IO [Int]
-fetchLineCodes session token = do
-    r <- newOlhoVivoApi session def token
-    if r
-        then do
-            lineCodes <- map olhovivoLineCodigoLinha <$>
-                         olhoVivoLines session def "azevedo"
-            putStrLn $ "Fetched " ++ show (length lineCodes) ++ " available lines"
-            return lineCodes
-        else fetchLineCodes session token
+fetchLineCodes :: Session -> IO [LineCode]
+fetchLineCodes session = do
+    lineCodes <- map olhovivoLineCodigoLinha <$>
+                 queryLines session def "azevedo"
+    putStrLn $ "Fetched " ++ show (length lineCodes) ++ " available lines"
+    return lineCodes
 
-listenForPositions :: Session -> ServerState -> [Int] -> IO ()
+listenForPositions :: Session -> ServerState -> [LineCode] -> IO ()
 listenForPositions session state = void . mapConcurrently loop
   where
     outputChan = serverPublishChan state
     loop lineCode = do
-        positions <- olhoVivoLinePositions session def lineCode
+        positions <- queryPositions session def lineCode
         mapConcurrently
             (atomically . writeTChan outputChan)
             (zip (repeat lineCode) positions)

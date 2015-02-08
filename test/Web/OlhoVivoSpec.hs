@@ -11,7 +11,7 @@ import Network.Wreq.Lens (responseStatus, statusCode)
 import Network.Wreq.Session hiding (withSession)
 import qualified Network.Wreq.Session as Wreq (withSession)
 import Network.Wreq.Types (Options(..))
-import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
+import Test.Hspec (Spec, describe, it, pendingWith, shouldBe, shouldSatisfy)
 import System.Environment (getEnv)
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
@@ -37,23 +37,28 @@ spec = do
            withSession def token $ \session ->
                sessionIsAuthenticated session
 
-    describe "olhoVivoLine" $
+    describe "queryLines" $
         it' "makes a query for lines matching a string" $ \session -> do
-            res <- olhoVivoLines session def "bandeira"
+            res <- queryLines session def "bandeira"
             any (\l -> olhovivoLineLetreiro l == "6262" &&
                        olhovivoLineTipo l == 10) res
                 `shouldBe` True
 
-    describe "olhoVivoStops" $
+    describe "queryStops" $ do
         it' "makes a query for stops matching a string" $ \session -> do
-            res <- olhoVivoStops session def "Afonso"
+            res <- queryStops session def ("Afonso" :: Text)
             any (\s -> olhovivoStopEndereco s ==
                        "R ARMINDA/ R BALTHAZAR DA VEIGA") res
                 `shouldBe` True
 
-    describe "olhoVivoExpressLanes" $
+        it "makes a query for stops matching a line code" $ pendingWith
+            "We need to test the variadic implementation for LineCode"
+        it "makes a query for stops matching an express lane code" $ pendingWith
+            "We need to test the variadic implementation for ExpressLaneCode"
+
+    describe "listExpressLanes" $
         it' "gets all express lanes in the city" $ \session -> do
-            res <- olhoVivoExpressLanes session def
+            res <- listExpressLanes session def
             any (\s -> olhovivoExpressLaneNome s == "Campo Limpo") res
                 `shouldBe` True
 
