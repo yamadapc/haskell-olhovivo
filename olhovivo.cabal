@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Web.OlhoVivo
   build-depends:       aeson
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , bytestring
                      , data-default
                      , hspec >= 2.1.2
@@ -32,7 +32,7 @@ executable olhovivo-websockets-server
   main-is:             Server.hs
   build-depends:       aeson
                      , async >= 2.0.1.5
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , bytestring
                      , data-default
                      , hspec >= 2.1.2
@@ -52,7 +52,7 @@ executable olhovivo-websockets-server
 executable olhovivo-websockets-client
   main-is:             WSClient.hs
   build-depends:       aeson
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , bytestring
                      , data-default
                      , hspec >= 2.1.2
@@ -73,7 +73,7 @@ executable olhovivo-extract-line-codes
   main-is:             ExtractLineCodes.hs
   build-depends:       aeson
                      , async >= 2.0.1.5
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , bytestring
                      , cassava
                      , data-default
@@ -92,7 +92,7 @@ executable olhovivo-extract-line-codes
 executable olhovivo-mock-server
   main-is:             Test/OlhoVivoMockServer.hs
   build-depends:       aeson >= 0.7.0.6
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , blaze-builder >= 0.3.3.4
                      , bytestring
                      , cookie >= 0.4.1.4
@@ -117,7 +117,7 @@ test-suite hspec
   type:                exitcode-stdio-1.0
   main-is: Spec.hs
   build-depends:       aeson
-                     , base >=4.7 && <4.8
+                     , base >=4 && <5
                      , bytestring
                      , data-default
                      , hspec >=2.1 && <3
