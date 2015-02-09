@@ -4,6 +4,12 @@ default:
 dependencies:
 	cabal install --only-dep --enable-test -j
 
+coverage:
+	cabal install --only-dep --enable-test --enable-coverage -j
+	cabal configure --enable-test --enable-coverage
+	cabal build
+	cabal test --show-details=always --test-option=--color
+
 configure:
 	cabal configure --enable-test
 
