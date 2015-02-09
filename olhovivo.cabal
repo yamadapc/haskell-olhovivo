@@ -13,7 +13,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Web.OlhoVivo
+  exposed-modules:     Web.OlhoVivo, Web.OlhoVivo.Internal
   build-depends:       aeson
                      , base >=4 && <5
                      , bytestring
