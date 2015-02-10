@@ -10,7 +10,7 @@ if [ "$TRAVIS_REPO_SLUG" == "yamadapc/haskell-olhovivo" ] && [ "$TRAVIS_PULL_REQ
   git config --global user.email "travis@travis-ci.org"
   git config --global user.name "travis-ci"
   git clone --quiet --branch=gh-pages https://${GH_TOKEN}@github.com/yamadapc/haskell-olhovivo
-  cd olhovivo
+  cd haskell-olhovivo
   cp -Rf $HOME/olhovivo-doc/* .
   git add -f .
   git commit -m "Latest documentation auto-deployed on $TRAVIS_BUILD_NUMBER"
