@@ -51,10 +51,16 @@ spec = do
                        "R ARMINDA/ R BALTHAZAR DA VEIGA") res
                 `shouldBe` True
 
-        it "makes a query for stops matching a line code" $ pendingWith
-            "We need to test the variadic implementation for LineCode"
-        it "makes a query for stops matching an express lane code" $ pendingWith
-            "We need to test the variadic implementation for ExpressLaneCode"
+        it' "makes a query for stops matching a line code" $ \session -> do
+            res <- queryStops session def (LineCode 1272)
+            any (\s -> olhovivoStopCodigoParada s == StopCode 480012876) res
+                `shouldBe` True
+
+        it' "makes a query for stops matching an express lane code" $ \session -> do
+            res <- queryStops session def (ExpressLaneCode 2)
+            any (\s -> olhovivoStopNome s == "VIEIRA DE MORAIS C/B 2" ) res
+                `shouldBe` True
+
 
     describe "listExpressLanes" $
         it' "gets all express lanes in the city" $ \session -> do

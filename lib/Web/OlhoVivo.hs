@@ -16,6 +16,7 @@
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Web.OlhoVivo
     (
       authenticateSession
@@ -78,27 +79,26 @@ queryPositions session opts lineCode = do
         Nothing -> fail "Unable to parse the Olho Vivo API's response"
 
 -- |
+-- @queryStops@
 -- An overloaded function for searching for stops, by 'Text', 'LineCode',
--- 'ExpressLaneCode' or any combination of them
-queryStops :: StopsQuery q
-           => Session -> OlhoVivoApiOptions -> q -> IO [OlhoVivoStop]
-queryStops session opts q =
-    let reqOpts = defaults { params = toParams q }
-      in olhoVivoGet session opts "/Parada/Buscar" reqOpts
+-- 'ExpressLaneCode' or any combination of them and its variadic boilerplate
+class StopsQuery q where
+    sqToParams :: q -> [(Text, Text)]
+    sqEndpoint :: q -> String
 
--- Variadic boilerplate for 'queryStops'
-class StopsQuery a where
-    toParams :: a -> [(Text, Text)]
+    queryStops :: StopsQuery q => Session -> OlhoVivoApiOptions -> q -> IO [OlhoVivoStop]
+    queryStops session opts q =
+        let reqOpts = defaults { params = sqToParams q }
+          in olhoVivoGet session opts (sqEndpoint (undefined :: q)) reqOpts
 
 instance StopsQuery Text where
-    toParams q = [("termosBusca", q)]
+    sqToParams q = [("termosBusca", q)]
+    sqEndpoint = const "/Parada/Buscar"
 
 instance StopsQuery LineCode where
-    toParams (LineCode l) = [("codigoLinha", pack (show l))]
+    sqToParams (LineCode l) = [("codigoLinha", pack (show l))]
+    sqEndpoint = const "/Parada/BuscarParadasPorLinha"
 
 instance StopsQuery ExpressLaneCode where
-    toParams (ExpressLaneCode e) = [("codigoCorredor", pack (show e))]
-
-instance StopsQuery (Maybe Text, Maybe LineCode, Maybe ExpressLaneCode) where
-    toParams (mt, ml, me) = maybe [] toParams ml ++ maybe [] toParams mt ++
-                            maybe [] toParams me
+    sqToParams (ExpressLaneCode e) = [("codigoCorredor", pack (show e))]
+    sqEndpoint = const "/Parada/BuscarParadasPorCorredor"
