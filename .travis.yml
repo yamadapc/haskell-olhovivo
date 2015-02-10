@@ -1,10 +1,13 @@
 language: haskell
 ghc: 7.8
 script:
-  - cabal configure --enable-tests --enable-library-coverage && cabal test --show-details=always --test-option=--color
-after_script:
-  - cabal install hpc-coveralls
-  - hpc-coveralls --exclude-dir=test hspec
+- cabal configure --enable-tests --enable-library-coverage && cabal test --show-details=always
+  --test-option=--color
+after_success:
+- cabal install hpc-coveralls
+- hpc-coveralls --exclude-dir=test hspec
+- "./.ci/deploy-documentation.sh"
 env:
   global:
-    secure: a16oCTxI7GBL+5j+pKkR4kghtOyErQCIJqNX1EHC5zxhWw5t4t1OQKhKUd+BFQxk6B7B+BQZ42549i4g9ESdCV7F8Se6DIFpj93a7uTtTeiPtnlxiiH2IVkWmvNVYswVk1uvBSnU7ZTJl8eG0GDPIlGtSvdBFWrXtHxO9W2pEXQ=
+  - secure: a16oCTxI7GBL+5j+pKkR4kghtOyErQCIJqNX1EHC5zxhWw5t4t1OQKhKUd+BFQxk6B7B+BQZ42549i4g9ESdCV7F8Se6DIFpj93a7uTtTeiPtnlxiiH2IVkWmvNVYswVk1uvBSnU7ZTJl8eG0GDPIlGtSvdBFWrXtHxO9W2pEXQ=
+  - secure: PllEXcMV7E9mS5rKYJcxFqL02eOJ6qcnEcxRYXc9VjrVId4tqiVfHTPcyeUuZr7NVAxLPGQnX/pvWUcl2t0JIRfCagVdRwc4IUoijdPQoBTp0uvSkFm3d1YWmMDZoavf9Dp4AkudfASqoFO8INGdSrFEM05i8ZDDNgoybcG7faE=
